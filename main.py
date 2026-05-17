@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException,Query
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -16,3 +16,16 @@ async def root()->dict:
 @app.get("/check")
 async def check()->dict:
     return {'message':'Server is running properly'}
+
+# dynamic query parameter passed in normal ways
+
+
+@app.get('/greet/{name}')
+async def greet(name:str)->dict:
+    return {'message':f'Hello {name}'}
+
+
+#query field passed by /?name=
+@app.get('/greet')
+async def greet2(name:str)->dict:
+    return {'message':f'Hello {name} newone '}
