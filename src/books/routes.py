@@ -1,57 +1,22 @@
-from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter,HTTPException,status
 from typing import List
+from schema import BookModel,BookUpdate
+from book_data import books
+book_router = APIRouter()
 
-class BookModel(BaseModel):
-    id: int
-    title: str
-    author: str
-    language: str
-
-
-books = [
-    {
-        "id": 23,
-        "title": "Harry potter",
-        "author": "chandan gupta",
-        "language": "english"
-    },
-    {
-        "id": 24,
-        "title": "Games of thrones",
-        "author": "chandan gupta",
-        "language": "english"
-    },
-    {
-        "id": 25,
-        "title": "The boys",
-        "author": "chandan gupta",
-        "language": "english"
-    }
-]
-
-
-class BookUpdate(BaseModel):
-    title: str
-    language: str
-
-
-app = FastAPI()
-
-
-@app.get('/books', status_code=200, response_model=List[BookModel])
+book_router.get('/', status_code=200, response_model=List[BookModel])
 async def get_books():
     return books
 
 
-@app.post('/createbook', status_code=status.HTTP_201_CREATED)
+book_router.post('/createbook', status_code=status.HTTP_201_CREATED)
 async def create_book(book_data: BookModel) -> dict:
     new_book = book_data.model_dump()
     books.append(new_book)
     return new_book
 
 
-@app.get("/books/{book_id}")
+book_router.get("/{book_id}")
 async def get_book(book_id: int):
     for book in books:
         if book_id == book['id']:
@@ -63,7 +28,7 @@ async def get_book(book_id: int):
     )
 
 
-@app.delete('/book/{book_id}', status_code=status.HTTP_200_OK)
+book_router.delete('/{book_id}', status_code=status.HTTP_200_OK)
 async def delete_book(book_id: int):
     for book in books:
         if book_id == book['id']:
@@ -76,7 +41,7 @@ async def delete_book(book_id: int):
     )
 
 
-@app.patch('/updateBook/{book_id}')
+book_router.patch('/updateBook/{book_id}')
 async def update_book(book_id: int, book_data: BookUpdate):
     for book in books:
         if book['id'] == book_id:
