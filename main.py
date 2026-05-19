@@ -1,55 +1,90 @@
-from fastapi import FastAPI,HTTPException,Query,Header
-from typing import Optional
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
-import os
-from dotenv import load_dotenv
-load_dotenv()
+from typing import List
 
-app = FastAPI(
-    title="Learning FastAPI",
-    description='This is my first ffastapi web backend',
-    version='1.0'
-)
-
-@app.get('/')
-async def root()->dict:
-    return {'message':'Hello world'}
-
-@app.get("/check")
-async def check()->dict:
-    return {'message':'Server is running properly'}
-
-# dynamic path parameter passed in normal ways
+class BookModel(BaseModel):
+    id: int
+    title: str
+    author: str
+    language: str
 
 
-@app.get('/greet/{name}')
-async def greet(name:str,age:Optional[int]=80)->dict:
-    return {'message':f'Hello {name} your age is {age}'}
-
-
-#dynamic query field passed by /?name=
-@app.get('/greet')
-async def greet2(name:str)->dict:
-    return {'message':f'Hello {name} newone '}
-
-class BookCreatemodel(BaseModel):
-    title:str
-    author:str
-
-@app.post('/createBook')
-async def create_book(bookData:BookCreatemodel):
-    return {
-        'message':'book created succesfully',
-        'title':bookData.title
+books = [
+    {
+        "id": 23,
+        "title": "Harry potter",
+        "author": "chandan gupta",
+        "language": "english"
+    },
+    {
+        "id": 24,
+        "title": "Games of thrones",
+        "author": "chandan gupta",
+        "language": "english"
+    },
+    {
+        "id": 25,
+        "title": "The boys",
+        "author": "chandan gupta",
+        "language": "english"
     }
+]
 
 
-@app.get('/get_headers',status_code=400)
-async def get_headers(
-    accept:str = Header(None),
-    content_type:str = Header(None)
-):
-    request_headers ={}
-    request_headers['Accept'] = accept
-    request_headers['content_type'] = content_type
-    return request_headers
+class BookUpdate(BaseModel):
+    title: str
+    language: str
+
+
+app = FastAPI()
+
+
+@app.get('/books', status_code=200, response_model=List[BookModel])
+async def get_books():
+    return books
+
+
+@app.post('/createbook', status_code=status.HTTP_201_CREATED)
+async def create_book(book_data: BookModel) -> dict:
+    new_book = book_data.model_dump()
+    books.append(new_book)
+    return new_book
+
+
+@app.get("/books/{book_id}")
+async def get_book(book_id: int):
+    for book in books:
+        if book_id == book['id']:
+            return book
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail='Book not found'
+    )
+
+
+@app.delete('/book/{book_id}', status_code=status.HTTP_200_OK)
+async def delete_book(book_id: int):
+    for book in books:
+        if book_id == book['id']:
+            books.remove(book)
+            return {'message': 'Book deleted successfully'}
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail='Book not found'
+    )
+
+
+@app.patch('/updateBook/{book_id}')
+async def update_book(book_id: int, book_data: BookUpdate):
+    for book in books:
+        if book['id'] == book_id:
+            book['title'] = book_data.title
+            book['language'] = book_data.language
+            return book
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail='Book not found'
+    )
