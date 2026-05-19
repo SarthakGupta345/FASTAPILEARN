@@ -1,4 +1,6 @@
-from fastapi import FastAPI,HTTPException,Query
+from fastapi import FastAPI,HTTPException,Query,Header
+from typing import Optional
+from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,15 +19,37 @@ async def root()->dict:
 async def check()->dict:
     return {'message':'Server is running properly'}
 
-# dynamic query parameter passed in normal ways
+# dynamic path parameter passed in normal ways
 
 
 @app.get('/greet/{name}')
-async def greet(name:str)->dict:
-    return {'message':f'Hello {name}'}
+async def greet(name:str,age:Optional[int]=80)->dict:
+    return {'message':f'Hello {name} your age is {age}'}
 
 
-#query field passed by /?name=
+#dynamic query field passed by /?name=
 @app.get('/greet')
 async def greet2(name:str)->dict:
     return {'message':f'Hello {name} newone '}
+
+class BookCreatemodel(BaseModel):
+    title:str
+    author:str
+
+@app.post('/createBook')
+async def create_book(bookData:BookCreatemodel):
+    return {
+        'message':'book created succesfully',
+        'title':bookData.title
+    }
+
+
+@app.get('/get_headers')
+async def get_headers(
+    accept:str = Header(None),
+    content_type:str = Header(None)
+):
+    request_headers ={}
+    request_headers['Accept'] = accept
+    request_headers['content_type'] = content_type
+    return request_headers
